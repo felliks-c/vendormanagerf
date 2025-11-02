@@ -1,5 +1,5 @@
 // composables/client/useCreateVendor.ts
-import axios from 'axios';
+import axios from '@/api/axios';
 import { Vendor, VendorCreateInput } from '@/composables/server/types';
 
 export const useCreateVendor = async (data: VendorCreateInput): Promise<Vendor | null> => {
