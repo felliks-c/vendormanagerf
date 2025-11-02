@@ -40,28 +40,6 @@ export async function PUT(req: NextRequest, context: Context) {
     }
 }
 
-// export async function DELETE(req: NextRequest, context: Context) {
-//     try {
-//         const { id } = await context.params; // await!
-//         const numId = Number(id);
-//         if (Number.isNaN(numId)) {
-//             return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
-//         }
-//         const message = await useDeleteVendor({ id: numId });
-//         return NextResponse.json({ message });
-//     } catch (err: any) {
-//         console.error('Error deleting vendor:', err);
-//         return NextResponse.json({ error: err.message }, { status: 500 });
-//     }
-// }
-
-
-
-
-// app/api/vendors/[id]/route.ts
-// import { NextRequest, NextResponse } from 'next/server';
-// import { useDeleteVendor } from '@/composables/server/useDeleteVendor';
-
 export async function DELETE(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
