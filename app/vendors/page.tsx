@@ -8,6 +8,7 @@ import VendorSearchDropdown from '@/components/VendorSearchDropdown';
 
 export default function VendorsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -28,7 +29,10 @@ export default function VendorsPage() {
       </header>
 
       <div className="mt-6">
-        <VendorTable />
+        <VendorTable
+          refreshKey={refreshKey}
+          onRefresh={() => setRefreshKey((k) => k + 1)}
+        />
       </div>
 
       {isModalOpen && (
@@ -36,7 +40,7 @@ export default function VendorsPage() {
           onClose={() => setIsModalOpen(false)}
           onCreate={() => {
             setIsModalOpen(false);
-            // Можно обновить таблицу, если нужно
+            setRefreshKey((k) => k + 1); // ← обновляем таблицу
           }}
         />
       )}
