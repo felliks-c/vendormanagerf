@@ -1,6 +1,8 @@
+// components/VendorTable.tsx
+
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Vendor } from '@/composables/server/types';
 import { useVendors } from '@/composables/client/useVendors';
 import { useSearchVendor } from '@/composables/client/useSearchVendor';
@@ -8,36 +10,120 @@ import { useDeleteVendor } from '@/composables/client/useDeleteVendor';
 import { Eye, Trash2, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VendorDetailModal from '@/components/VendorDetailModal';
+import debounce from 'lodash/debounce';
+
+interface VendorFilter {
+  id?: number;
+  name?: string;
+  contactEmail?: string;
+  category?: string;
+  rating?: number;
+  limit?: number;
+  offset?: number;
+}
+
+interface Filters {
+  category?: string;
+  page?: number;
+  limit?: number;
+  name?: string;
+}
 
 
 export default function VendorTable() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({ country: '', category: '' });
+  const [filters, setFilters] = useState<Filters>({
+    category: '',
+    page: 1,
+    limit: 10,
+  });
+
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<Vendor | null>(null);
 
-  // загрузка всех вендоров по фильтрам
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      const data = await useVendors(filters);
-      if (data) setVendors(data);
-      setLoading(false);
-    };
-    fetchData();
-  }, [filters]);
+  // Дебаунс для поиска
+  const debouncedSearch = useCallback(
+    debounce((name: string) => {
+      setFilters((prev) => ({
+        ...prev,
+        name,
+        page: 1, // сбрасываем страницу при новом поиске
+      }));
+    }, 500),
+    []
+  );
 
-  // поиск по строке
-  const handleSearch = async () => {
-    setLoading(true);
-    const result = await useSearchVendor({ name: search });
-    if (result) setVendors(result);
-    setLoading(false);
+  // Обработчик ввода
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    debouncedSearch(value);
   };
 
-  // удаление
+  // Загрузка данных
+  const fetchVendors = useCallback(async () => {
+    if (!hasMore && (filters.page ?? 1) > 1) return;
+
+    setLoading(true);
+    try {
+      let data: Vendor[] | null = null;
+
+      // Если есть поиск по имени — используем search API
+      if (filters.name) {
+        data = await useSearchVendor({
+          name: filters.name,
+        });
+      } else {
+        // Иначе — обычные фильтры
+        data = await useVendors({
+          category: filters.category || undefined,
+          limit: filters.limit,
+          offset: ((filters.page ?? 1) - 1) * (filters.limit ?? 10),
+        } as any);
+      }
+
+      if (data) {
+        if (filters.page === 1) {
+          setVendors(data);
+        } else {
+          setVendors((prev) => [...prev, ...data]);
+        }
+        setHasMore(data.length === filters.limit);
+      } else {
+        setVendors([]);
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error('Error fetching vendors:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters, hasMore]);
+
+  // Загрузка при изменении фильтров
+  useEffect(() => {
+    fetchVendors();
+  }, [fetchVendors]);
+
+  // Lazy loading при скролле
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop >=
+          document.documentElement.offsetHeight - 100 &&
+        !loading &&
+        hasMore
+      ) {
+        setFilters((prev) => ({ ...prev, page: (prev.page ?? 1) + 1 }));
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loading, hasMore]);
+
+  // Удаление
   const handleDelete = async (vendor: Vendor) => {
     if (!confirm(`Удалить поставщика "${vendor.name}"?`)) return;
     const message = await useDeleteVendor({ id: vendor.id });
@@ -48,49 +134,27 @@ export default function VendorTable() {
 
   return (
     <div className="bg-white shadow-sm rounded-2xl p-6 border border-gray-200">
-      {/* 🔍 Поиск + фильтры */}
+      {/* Поиск + фильтры */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
         <div className="flex flex-col gap-2 w-full md:w-auto">
           <label className="text-sm font-medium text-gray-600">Поиск по имени</label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Введите имя поставщика..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg w-full md:w-64 focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-            <button
-              onClick={handleSearch}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            >
-              Найти
-            </button>
-          </div>
+          <input
+            type="text"
+            placeholder="Введите имя поставщика..."
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="px-3 text-gray-500 py-2 border border-gray-300 rounded-lg w-full md:w-64 focus:ring-2 focus:ring-blue-500 outline-none"
+          />
         </div>
 
-        {/* Фильтры */}
         <div className="flex gap-3 flex-wrap md:flex-nowrap">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-600">Страна</label>
-            <select
-              value={filters.country}
-              onChange={(e) => setFilters({ ...filters, country: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-lg"
-            >
-              <option value="">Все</option>
-              <option value="RU">Россия</option>
-              <option value="TJ">Таджикистан</option>
-              <option value="UZ">Узбекистан</option>
-            </select>
-          </div>
 
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-gray-600">Категория</label>
             <select
               value={filters.category}
-              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              className="px-3 py-2 border border-gray-300 rounded-lg"
+              onChange={(e) => setFilters({ ...filters, category: e.target.value, page: 1 })}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-gray-500"
             >
               <option value="">Все</option>
               <option value="electronics">Электроника</option>
@@ -101,29 +165,20 @@ export default function VendorTable() {
         </div>
       </div>
 
-      {/* 📋 Таблица */}
+      {/* Таблица */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left text-gray-600 border-t border-gray-100">
           <thead className="bg-gray-100 text-gray-700 text-sm uppercase">
             <tr>
               <th className="px-4 py-3">ID</th>
               <th className="px-4 py-3">Название</th>
-              <th className="px-4 py-3">Страна</th>
               <th className="px-4 py-3">Категория</th>
               <th className="px-4 py-3 text-right">Действия</th>
             </tr>
           </thead>
-
           <tbody>
             <AnimatePresence>
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="py-12 text-center text-gray-400">
-                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" />
-                    <p className="mt-2">Загрузка поставщиков...</p>
-                  </td>
-                </tr>
-              ) : vendors.length ? (
+              {vendors.length ? (
                 vendors.map((vendor) => (
                   <motion.tr
                     key={vendor.id}
@@ -153,58 +208,40 @@ export default function VendorTable() {
                     </td>
                   </motion.tr>
                 ))
-              ) : (
+              ) : loading ? null : (
                 <tr>
-                  <td colSpan={5} className="py-10 text-center text-gray-400">
-                    Ничего не найдено 😔
+                  <td colSpan={4} className="py-10 text-center text-gray-400">
+                    Ничего не найдено
                   </td>
                 </tr>
               )}
             </AnimatePresence>
           </tbody>
         </table>
+
+        {/* Lazy loading индикатор */}
+        {loading && (
+          <div className="py-4 text-center">
+            <Loader2 className="w-5 h-5 animate-spin mx-auto text-blue-600" />
+          </div>
+        )}
+
+        {!hasMore && vendors.length > 0 && (
+          <div className="py-4 text-center text-sm text-gray-500">
+            Больше нет данных
+          </div>
+        )}
       </div>
 
-      {/* Детальное окно (placeholder) */}
-      {/* <AnimatePresence>
-        {selectedVendor && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg relative"
-            >
-              <h2 className="text-xl font-semibold mb-3">
-                Детали поставщика #{selectedVendor.id}
-              </h2>
-              <p className="text-gray-700 mb-1">Имя: {selectedVendor.name}</p>
-              <p className="text-gray-700 mb-1">Страна: {selectedVendor.country}</p>
-              <p className="text-gray-700 mb-4">Категория: {selectedVendor.category}</p>
-              <button
-                onClick={() => setSelectedVendor(null)}
-                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence> */}
       <VendorDetailModal
         vendor={selectedVendor}
         onClose={() => setSelectedVendor(null)}
         onUpdate={(updated) =>
-            setVendors((prev) =>
+          setVendors((prev) =>
             prev.map((v) => (v.id === updated.id ? updated : v))
-            )
+          )
         }
-        />
+      />
     </div>
   );
 }
