@@ -1,5 +1,5 @@
 // composables/useUpdateVendor.ts
-import axios from 'axios';
+import axios from '@/api/axios';
 import { Vendor, VendorUpdateInput } from './types';
 
 export const useUpdateVendor = async (data: VendorUpdateInput): Promise<Vendor | null> => {

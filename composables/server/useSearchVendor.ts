@@ -1,5 +1,5 @@
 // composables/useVendorSearch.ts
-import axios from 'axios';
+import axios from '@/api/axios';
 import { Vendor, VendorSearchFilter } from './types';
 
 export const useSearchVendor = async (filter: VendorSearchFilter): Promise<Vendor[] | null> => {

@@ -1,4 +1,4 @@
-// types/vendor.ts
+// composables/server/types.ts
 export interface Vendor {
   id: number;
   name: string;

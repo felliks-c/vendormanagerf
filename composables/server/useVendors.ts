@@ -1,5 +1,5 @@
-// composables/useVendors.ts
-import axios from 'axios';
+// composables/server/useVendors.ts
+import axios from '@/api/axios';
 import { Vendor, VendorFilter } from './types';
 
 export const useVendors = async (filter: VendorFilter = {}): Promise<Vendor[] | null> => {

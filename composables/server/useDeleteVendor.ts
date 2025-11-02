@@ -1,5 +1,5 @@
 // composables/useDeleteVendor.ts
-import axios from 'axios';
+import axios from '@/api/axios';
 import { VendorDeleteInput } from './types';
 
 export const useDeleteVendor = async (data: VendorDeleteInput): Promise<string | null> => {
