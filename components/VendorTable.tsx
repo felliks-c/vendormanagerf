@@ -117,7 +117,7 @@ export default function VendorTable({ refreshKey, onRefresh }: Props) {
             placeholder="Введите имя поставщика..."
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg w-full md:w-64 focus:ring-2 focus:ring-blue-500 outline-none"
+            className="px-3 py-2 border border-gray-300 rounded-lg w-full md:w-64 focus:ring-2 focus:ring-blue-500 outline-none text-gray-500"
           />
         </div>
 
@@ -139,7 +139,7 @@ export default function VendorTable({ refreshKey, onRefresh }: Props) {
             <select
               value={filters.category}
               onChange={(e) => setFilters({ ...filters, category: e.target.value, page: 1 })}
-              className="px-3 py-2 border border-gray-300 rounded-lg"
+              className="px-3 py-2 border border-gray-300 rounded-lg text-gray-500"
             >
               <option value="">Все</option>
               <option value="electronics">Электроника</option>

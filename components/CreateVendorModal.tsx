@@ -294,7 +294,7 @@ export default function CreateVendorModal({ onClose, onCreate }: Props) {
                 value={form.name}
                 onChange={(e) => handleChange('name', e.target.value)}
                 placeholder="Tech Supplies Inc."
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-gray-500"
               />
             </div>
 
@@ -307,7 +307,7 @@ export default function CreateVendorModal({ onClose, onCreate }: Props) {
                 value={form.contactEmail}
                 onChange={(e) => handleChange('contactEmail', e.target.value)}
                 placeholder="contact@techsupplies.com"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-gray-500"
               />
             </div>
 
@@ -318,7 +318,7 @@ export default function CreateVendorModal({ onClose, onCreate }: Props) {
               <select
                 value={form.category}
                 onChange={(e) => handleChange('category', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-gray-500"
               >
                 <option value="">Выберите категорию</option>
                 <option value="electronics">Электроника</option>
@@ -335,10 +335,10 @@ export default function CreateVendorModal({ onClose, onCreate }: Props) {
                 type="number"
                 min="0"
                 max="5"
-                step="0.1"
+                step="1"
                 value={form.rating}
                 onChange={(e) => handleChange('rating', Number(e.target.value))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none text-gray-500"
               />
             </div>
 

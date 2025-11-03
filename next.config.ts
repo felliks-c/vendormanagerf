@@ -1,11 +1,8 @@
-import type { NextConfig } from "next";
+// next.config.ts
+import type { NextConfig } from 'next';
 
-// next.config.js
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  experimental: {
-    runtime: 'nodejs',  // ← Используй Node.js вместо Edge
-  },
+const nextConfig: NextConfig = {
+
 };
 
-module.exports = nextConfig;
+export default nextConfig;

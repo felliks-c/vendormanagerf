@@ -63,7 +63,7 @@ export default function VendorSearchDropdown() {
   return (
     <div className="relative w-full sm:w-64" ref={inputRef}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 " />
         <input
           type="text"
           value={query}
