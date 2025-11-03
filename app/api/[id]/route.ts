@@ -1,51 +1,51 @@
-// src/app/api/vendors/[id]/route.ts
+// app/api/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { useUpdateVendor } from '@/composables/server/useUpdateVendor';
 import { useDeleteVendor } from '@/composables/server/useDeleteVendor';
 import { useVendors } from '@/composables/server/useVendors';
 
-// ВНИМАНИЕ: params теперь Promise!
+export const runtime = 'nodejs'; // ← важно для Vercel
+
 type Context = { params: Promise<{ id: string }> };
 
 export async function GET(req: NextRequest, context: Context) {
-    const params = await context.params;
+  try {
+    const params = await context.params; // ← ТОЛЬКО ОДИН РАЗ!
     const id = Number(params.id);
-    try {
-        const { id } = await context.params; // await!
-        const numId = Number(id);
-        if (Number.isNaN(numId)) {
-            return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
-        }
-        const data = await useVendors({ id: numId });
-        return NextResponse.json(data?.[0] ?? null);
-    } catch (err: any) {
-        console.error('Error getting vendor:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+
+    if (isNaN(id)) {
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
     }
+
+    const data = await useVendors({ id });
+    return NextResponse.json(data?.[0] ?? null);
+  } catch (err: any) {
+    console.error('GET vendor error:', err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
 
 export async function PUT(req: NextRequest, context: Context) {
-    const params = await context.params;
+  try {
+    const params = await context.params; // ← ТОЛЬКО ОДИН РАЗ!
     const id = Number(params.id);
     const body = await req.json();
 
-    try {
-        const { id } = await context.params; // await!
-        const body = await req.json();
-        const data = await useUpdateVendor({ id, ...body });
-        return NextResponse.json(data);
-    } catch (err: any) {
-        console.error('Error updating vendor:', err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    if (isNaN(id)) {
+      return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
     }
+
+    const data = await useUpdateVendor({ id, ...body });
+    return NextResponse.json(data);
+  } catch (err: any) {
+    console.error('PUT vendor error:', err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: NextRequest, context: Context) {
   try {
-    const params = await context.params;
+    const params = await context.params; // ← ТОЛЬКО ОДИН РАЗ!
     const id = Number(params.id);
 
     if (isNaN(id)) {
@@ -59,7 +59,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
     }
   } catch (err: any) {
-    console.error('API route error:', err);
+    console.error('DELETE vendor error:', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
