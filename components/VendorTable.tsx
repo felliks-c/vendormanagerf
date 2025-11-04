@@ -10,6 +10,9 @@ import { Eye, Trash2, Loader2, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VendorDetailModal from '@/components/VendorDetailModal';
 import debounce from 'lodash/debounce';
+import { Star, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { useMemo } from 'react';
+import { ArrowUpDown } from 'lucide-react';
 
 interface Props {
   refreshKey: number;
@@ -77,6 +80,21 @@ export default function VendorTable({ refreshKey, onRefresh }: Props) {
     }
   }, [filters, hasMore]);
 
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
+
+  const sortedVendors = useMemo(() => {
+    if (!sortOrder) return vendors;
+    return [...vendors].sort((a, b) => {
+      const ra = a.rating ?? 0;
+      const rb = b.rating ?? 0;
+      return sortOrder === 'asc' ? ra - rb : rb - ra;
+    });
+  }, [vendors, sortOrder]);
+
+  useEffect(() => {
+    setSortOrder(null);
+  }, [filters]);
+
   useEffect(() => {
     fetchVendors();
   }, [fetchVendors, refreshKey]);
@@ -133,6 +151,29 @@ export default function VendorTable({ refreshKey, onRefresh }: Props) {
           Обновить
         </button>
 
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-gray-600">Сортировка</label>
+          <button
+            onClick={() => {
+              if (sortOrder === null) setSortOrder('asc');
+              else if (sortOrder === 'asc') setSortOrder('desc');
+              else setSortOrder('asc');
+            }}
+            className={`
+              px-3 py-2 rounded-lg border transition flex items-center gap-2 text-sm
+              ${sortOrder === null 
+                ? 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50' 
+                : 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100'
+              }
+            `}
+          >
+            <ArrowUpDown className="w-4 h-4" />
+            Рейтинг
+            {sortOrder === 'asc' && <span className="text-xs">(от худшего)</span>}
+            {sortOrder === 'desc' && <span className="text-xs">(от лучшего)</span>}
+          </button>
+        </div>
+
         <div className="flex gap-3 flex-wrap md:flex-nowrap">
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium text-gray-600">Категория</label>
@@ -162,8 +203,8 @@ export default function VendorTable({ refreshKey, onRefresh }: Props) {
           </thead>
           <tbody>
             <AnimatePresence>
-              {vendors.length ? (
-                vendors.map((vendor) => (
+              {sortedVendors.length ? (
+                sortedVendors.map((vendor) => (
                   <motion.tr
                     key={vendor.id}
                     initial={{ opacity: 0, y: 5 }}
@@ -174,6 +215,16 @@ export default function VendorTable({ refreshKey, onRefresh }: Props) {
                     <td className="px-4 py-3">{vendor.id}</td>
                     <td className="px-4 py-3 font-medium text-gray-900">{vendor.name}</td>
                     <td className="px-4 py-3">{vendor.category || '-'}</td>
+                    <td className="px-4 py-3">
+                      {vendor.rating ? (
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                          <span>{vendor.rating.toFixed(1)}</span>
+                        </div>
+                      ) : (
+                        '-'
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-right flex justify-end gap-3">
                       <button
                         onClick={() => setSelectedVendor(vendor)}
@@ -193,11 +244,15 @@ export default function VendorTable({ refreshKey, onRefresh }: Props) {
                   </motion.tr>
                 ))
               ) : loading ? null : (
-                <tr>
-                  <td colSpan={4} className="py-10 text-center text-gray-400">
+                <motion.tr
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <td colSpan={5} className="py-10 text-center text-gray-400">
                     Ничего не найдено
                   </td>
-                </tr>
+                </motion.tr>
               )}
             </AnimatePresence>
           </tbody>
